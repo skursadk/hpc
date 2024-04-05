@@ -1,0 +1,38 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: clone-build-push
+spec:
+  params:
+    - name: version
+      default: "latest"
+    - name: repo-url
+    - name: branch-name
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: clone-build-push-run-
+      spec:
+        serviceAccountName: tekton-sa
+        workspaces:
+          - name: shared-data
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+          - name: docker-credentials
+            secret:
+              secretName: docker-credentials
+        pipelineRef:
+          name: clone-build-push
+        params:
+          - name: image-reference
+            value: $(tt.params.version)
+          - name: repo-url
+            value: $(tt.params.repo-url)
+          - name: branch-name
+            value: $(tt.params.branch-name)

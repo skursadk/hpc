@@ -1,0 +1,77 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: clone-build-push
+spec:
+  description: |
+    This pipeline clones a git repo, builds a Docker image with Kaniko and
+    pushes it to a registry
+  params:
+    - name: repo-url
+      type: string
+    - name: image-reference
+      type: string
+    - name: branch-name
+      type: string
+  workspaces:
+    - name: shared-data
+    - name: docker-credentials
+  tasks:
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: url
+          value: $(params.repo-url)
+    - name: build-push
+      runAfter: ["fetch-source"]
+      taskRef:
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: shared-data
+        - name: dockerconfig
+          workspace: docker-credentials
+      params:
+        - name: IMAGE
+          value: kursadk/hpc-go:$(params.image-reference)
+    - name: trivy-scan
+      runAfter: ["build-push"]
+      taskRef:
+        name: trivy-scanner
+      workspaces:
+        - name: manifest-dir
+          workspace: shared-data
+      params:
+        - name: ARGS
+          value:
+            - "image"
+            - "--exit-code"
+            - "1"
+            - "--severity"
+            - "CRITICAL"
+        - name: IMAGE_PATH
+          value: kursadk/hpc-go:$(params.image-reference)
+    - name: helm-upgrade
+      runAfter: ["trivy-scan"]
+      taskRef:
+        name: helm-upgrade-from-source
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: charts_dir
+          value: go-app
+        - name: release_name
+          value: go-app
+        - name: release_namespace
+          value: $(params.branch-name)
+        - name: values_file
+          value: values.yaml
+        - name: upgrade_extra_params
+          value: "--create-namespace"
+        - name: overwrite_values
+          value: "image.tag=$(params.image-reference),ingress.hosts[0].host=go-app-$(params.branch-name).co"

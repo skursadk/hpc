@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: clone-build-push
+spec:
+  params:
+    - name: version
+      value: $(body.pull_request.head.sha)
+    - name: repo-url
+      value: $(body.pull_request.head.repo.clone_url)
+    - name: branch-name
+      value: $(body.pull_request.head.ref)

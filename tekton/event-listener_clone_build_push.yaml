@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: clone-build-push
+spec:
+  serviceAccountName: tekton-sa
+  triggers:
+    - name: clone-build-push
+      bindings:
+        - ref: clone-build-push
+      template:
+        ref: clone-build-push
