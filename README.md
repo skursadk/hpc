@@ -18,7 +18,7 @@ You can follow the instructions below to create a minikube cluster, install tekt
 	kubectl rollout status deployment tekton-pipelines-controller
 	kubectl rollout status deployment tekton-events-controller
 	```
-- Instal Tekton Triggers
+- Install Tekton Triggers
 	```
 	kubectl apply --filename \
 	https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
