@@ -106,6 +106,13 @@ This is a straight forward CI/CD pipeline created with the above mentioned tech 
 - Pipeline runs in any Pull Request actions. Those actions needs to be caught and act accordingly
 - It all the time creates/updates an application however it needs to delete the correspondent application and namespace when the Pull Request is closed 
 - Branch name is used in `namespace name` and `hostname` at the ingress which comes with some restrictions. It should contain only lower case letters, `-` and `[0-9]`. Moreover it has a maximum length that needs to be calculated and filtered
+- Last but not least, no need to mention that there is not any promotion of the artifacts to the prod after merging into master
 
 >**NOTE**: The main challenge was to implement all of those in a limited timeframe due to `Feast of Ramadan`
  
+ ## Security Practices:
+There is a task for `trivy scan` which scans the built image and fails the build if a critical vulnerability is found. There are couple of things needs to be thought here
+- Because the steps are running sequentially, it may slow down the pipeline as the size of the image increases
+- It fails the pipeline but does not clean up the registry which may cause a security breach
+	- In production environments, clusters needs to be secured just to accept images from a certain registries where those registries are vulnerability-free as mush as  possible
+- Apart from those, kubernetes resources can be more secured via readonly file system, limited capabilities etc. But within the scope of this assignment, they are not implemented
